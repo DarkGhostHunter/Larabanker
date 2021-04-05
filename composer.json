@@ -1,0 +1,67 @@
+{
+    "name": "darkghosthunter/larabanker",
+    "description": "Transbank SDK for Laravel",
+    "keywords": [
+        "transbank",
+        "webpay",
+        "oneclick",
+        "laravel"
+    ],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Italo Israel Baeza Cabrera",
+            "email": "darkghosthunter@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.3",
+        "ext-json": "*",
+        "illuminate/http": "^7.0||^8.0",
+        "illuminate/events": "^7.0||^8.0",
+        "illuminate/config": "^7.0||^8.0",
+        "illuminate/support": "^7.0||^8.0",
+        "illuminate/view": "^7.0||^8.0",
+        "guzzlehttp/guzzle": "^7.2",
+        "darkghosthunter/transbank": "^1.0.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "mockery/mockery": "^1.4",
+        "orchestra/testbench": "^5.2||^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DarkGhostHunter\\Larabanker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit --coverage-clover build/logs/clover.xml",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true,
+        "process-timeout": 900
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DarkGhostHunter\\Larabanker\\ServiceProvider"
+            ],
+            "aliases": {
+                "Transbank": "DarkGhostHunter\\Larabanker\\Facades\\Transbank",
+                "Webpay": "DarkGhostHunter\\Larabanker\\Facades\\Webpay",
+                "WebpayMall": "DarkGhostHunter\\Larabanker\\Facades\\WebpayMall",
+                "OneclickMall": "DarkGhostHunter\\Larabanker\\Facades\\OneclickMall"
+            }
+        }
+    }
+}

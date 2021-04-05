@@ -28,7 +28,7 @@
         "darkghosthunter/transbank": "^1.0.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^9.5.4",
         "mockery/mockery": "^1.4",
         "orchestra/testbench": "^5.2||^6.16"
     },

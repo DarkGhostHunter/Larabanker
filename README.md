@@ -2,7 +2,7 @@
 
 [![Latest Stable Version](https://poser.pugx.org/darkghosthunter/larabanker/v/stable)](https://packagist.org/packages/darkghosthunter/larabanker) [![License](https://poser.pugx.org/darkghosthunter/larabanker/license)](https://packagist.org/packages/darkghosthunter/larabanker)
 ![](https://img.shields.io/packagist/php-v/darkghosthunter/larabanker.svg)
-[![Build Status](https://travis-ci.com/darkghosthunter/larabanker.svg?branch=master)](https://travis-ci.com/darkghosthunter/larabanker) [![Coverage Status](https://coveralls.io/repos/github/darkghosthunter/larabanker/badge.svg?branch=master)](https://coveralls.io/github/darkghosthunter/larabanker?branch=master) [![Maintainability](https://api.codeclimate.com/v1/badges/20d69b045d3c273d2e4d/maintainability)](https://codeclimate.com/github/darkghosthunter/larabanker/maintainability)
+[![Build Status](https://travis-ci.com/darkghosthunter/larabanker.svg?branch=master)](https://travis-ci.com/darkghosthunter/larabanker) [![Coverage Status](https://coveralls.io/repos/github/darkghosthunter/larabanker/badge.svg?branch=master)](https://coveralls.io/github/darkghosthunter/larabanker?branch=master)
 
 # Larabanker - Transbank for Laravel
 

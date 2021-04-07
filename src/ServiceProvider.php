@@ -87,7 +87,7 @@ class ServiceProvider extends BaseServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->publishes([__DIR__ . '/../config/larabanker.php' => config_path('larabanker.php')], 'config');
+            $this->publishes([__DIR__.'/../config/larabanker.php' => config_path('larabanker.php')], 'config');
             $this->publishes([__DIR__.'/../resources/views' => resource_path('views/vendor/larabanker')], 'views');
             $this->publishes([__DIR__.'/../resources/lang' => resource_path('lang/vendor/larabanker')], 'lang');
         }

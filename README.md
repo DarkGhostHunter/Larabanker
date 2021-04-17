@@ -33,17 +33,27 @@ This package mimics the Transbank SDK, so you should check the documentation of 
 
 To start playing with Transbank services, you can use the included `Webpay`, `WebpayMall` and `Oneclick` facades which use minimum parameters.
 
-Along the facades, you can also use the `larabanker::webpay.redirect` or `larabanker::oneclick.redirect` views to redirect the user to Transbank and complete the Webpay payment or Oneclick registration, respectively.
-
 ```php
 use DarkGhostHunter\Larabanker\Facades\Webpay;
 
 $response = Webpay::create('buy-order#1230', 1000);
 
-return view('larabanker::webpay.redirect')->with('response', $response);
+return redirect()->away($response, 303);
 ```
 
-The redirection URLs, which Transbank uses to redirect the user back to your application once the payment process is complete, are these by default. 
+> If you're doing a `GET` redirect, ensure the code is `303`.
+
+Along the facades, you can use the `larabanker::oneclick.redirect` view to redirect the user to Transbank and complete the Oneclick registration.
+
+```php
+use DarkGhostHunter\Larabanker\Facades\OneclickMall;
+
+$response = OneclickMall::start('johndoe', 'john@doe.com');
+
+return view('larabank::oneclick.redirect', ['response' => $response]);
+```
+
+The redirection URLs, which Transbank uses to redirect the user **back** to your application once the payment process is complete, are these by default. 
 
 | Service | URL | Value |
 |---|---|---|

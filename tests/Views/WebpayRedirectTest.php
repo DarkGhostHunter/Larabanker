@@ -16,7 +16,7 @@ class WebpayRedirectTest extends TestCase
         $render = view('larabanker::webpay.redirect')->with('response', new Response('test_token', 'test_url'));
 
         static::assertStringContainsString(
-            '<form id="redirect" action="test_url" method="post">',
+            '<form id="redirect" action="test_url" method="get">',
             $render
         );
 

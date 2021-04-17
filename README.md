@@ -1,6 +1,6 @@
 ![Paul Felberbauer - Unsplash (UL) #-idNOBU5k_80](https://images.unsplash.com/photo-1591030434469-3d78c7b17820?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1280&h=400&q=80)
 
-[![Latest Stable Version](https://poser.pugx.org/darkghosthunter/larabanker/v/stable)](https://packagist.org/packages/darkghosthunter/larabanker) [![License](https://poser.pugx.org/darkghosthunter/larabanker/license)](https://packagist.org/packages/darkghosthunter/larabanker) ![](https://img.shields.io/packagist/php-v/darkghosthunter/larabanker.svg) [![Coverage Status](https://coveralls.io/repos/github/darkghosthunter/larabanker/badge.svg?branch=master)](https://coveralls.io/github/darkghosthunter/larabanker?branch=master) [![Laravel Octane Compatible](https://img.shields.io/badge/Laravel%20Octane-Compatible-success?style=flat&logo=laravel)](https://github.com/laravel/octane)
+[![Latest Stable Version](https://poser.pugx.org/darkghosthunter/larabanker/v/stable)](https://packagist.org/packages/darkghosthunter/larabanker) [![License](https://poser.pugx.org/darkghosthunter/larabanker/license)](https://packagist.org/packages/darkghosthunter/larabanker) ![](https://img.shields.io/packagist/php-v/darkghosthunter/larabanker.svg) [![Coverage Status](https://coveralls.io/repos/github/DarkGhostHunter/Larabanker/badge.svg?branch=master)](https://coveralls.io/github/DarkGhostHunter/Larabanker?branch=master) [![Laravel Octane Compatible](https://img.shields.io/badge/Laravel%20Octane-Compatible-success?style=flat&logo=laravel)](https://github.com/laravel/octane)
 
 # Larabanker - Transbank for Laravel
 
@@ -33,17 +33,27 @@ This package mimics the Transbank SDK, so you should check the documentation of 
 
 To start playing with Transbank services, you can use the included `Webpay`, `WebpayMall` and `Oneclick` facades which use minimum parameters.
 
-Along the facades, you can also use the `larabanker::webpay.redirect` or `larabanker::oneclick.redirect` views to redirect the user to Transbank and complete the Webpay payment or Oneclick registration, respectively.
-
 ```php
 use DarkGhostHunter\Larabanker\Facades\Webpay;
 
 $response = Webpay::create('buy-order#1230', 1000);
 
-return view('larabanker::webpay.redirect')->with('response', $response);
+return redirect()->away($response, 303);
 ```
 
-The redirection URLs, which Transbank uses to redirect the user back to your application once the payment process is complete, are these by default. 
+> If you're doing a `GET` redirect, ensure the code is `303`.
+
+Along the facades, you can use the `larabanker::oneclick.redirect` view to redirect the user to Transbank and complete the Oneclick registration.
+
+```php
+use DarkGhostHunter\Larabanker\Facades\OneclickMall;
+
+$response = OneclickMall::start('johndoe', 'john@doe.com');
+
+return view('larabank::oneclick.redirect', ['response' => $response]);
+```
+
+The redirection URLs, which Transbank uses to redirect the user **back** to your application once the payment process is complete, are these by default. 
 
 | Service | URL | Value |
 |---|---|---|

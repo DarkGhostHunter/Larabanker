@@ -8,8 +8,8 @@ This package connects the non-official [Transbank SDK](https://github.com/DarkGh
 
 ## Requirements
 
-* PHP >= 7.3
-* Laravel 7.x or 8.x
+* PHP >= 8.0
+* Laravel 8.x
 
 > Check older releases for older Laravel versions.
 
@@ -25,78 +25,64 @@ composer require darkghosthunter/larabanker
 
 This package mimics the Transbank SDK, so you should check the documentation of these services in Transbank Developer's site (in spanish).
 
-- [Webpay](https://www.transbankdevelopers.cl/documentacion/webpay-plus#webpay-plus) - [[English translated]](https://translate.google.com/translate?hl=&sl=es&tl=en&u=https%3A%2F%2Fwww.transbankdevelopers.cl%2Fdocumentacion%2Fwebpay-plus)
-- [Webpay Mall](https://www.transbankdevelopers.cl/documentacion/webpay-plus#webpay-plus-mall) - [[English translated]](https://translate.google.com/translate?hl=&sl=es&tl=en&u=https%3A%2F%2Fwww.transbankdevelopers.cl%2Fdocumentacion%2Fwebpay-plus%23webpay-plus-mall)
-- [Oneclick Mall](https://www.transbankdevelopers.cl/documentacion/oneclick) - [[English translated]](https://translate.google.com/translate?hl=&sl=es&tl=en&u=https%3A%2F%2Fwww.transbankdevelopers.cl%2Fdocumentacion%2Foneclick)
+- [Webpay](https://www.transbankdevelopers.cl/documentacion/webpay-plus#webpay-plus)
+- [Webpay Mall](https://www.transbankdevelopers.cl/documentacion/webpay-plus#webpay-plus-mall)
+- [Oneclick Mall](https://www.transbankdevelopers.cl/documentacion/oneclick)
 
 ## Quickstart
 
-To start playing with Transbank services, you can use the included `Webpay`, `WebpayMall` and `Oneclick` facades which use minimum parameters.
+To start using Transbank services, you can use the included `Webpay`, `WebpayMall` and `Oneclick` facades and the `redirect()` method, which use minimum parameters and returns a ready-made `GET` redirect to Transbank. 
 
 ```php
 use DarkGhostHunter\Larabanker\Facades\Webpay;
 
-$response = Webpay::create('buy-order#1230', 1000);
+return Webpay::redirect('buy-order#1230', 1000);
+```
+
+Alternatively, you can still have total control to create transactions using the facades.
+
+```php
+use DarkGhostHunter\Larabanker\Facades\Webpay;
+
+$response = Webpay::create('buyOrder#1230', 1000, route('payment'));
 
 return redirect()->away($response, 303);
 ```
 
-> If you're doing a `GET` redirect, ensure the code is `303`.
+> Since API 1.2, Transbank services support `GET` redirects. There is no longer need to use views with Javascript redirection.
 
-Along the facades, you can use the `larabanker::oneclick.redirect` view to redirect the user to Transbank and complete the Oneclick registration.
+Redirects are made using [default route names](#dealing-with-post-and-session-destruction) that centralizes the payment endpoint.
 
-```php
-use DarkGhostHunter\Larabanker\Facades\OneclickMall;
+## Dealing with POST and Session destruction
 
-$response = OneclickMall::start('johndoe', 'john@doe.com');
+Laravel sets cookies as `SameSite: lax` by default. This means that Transbank will redirect using a full `POST` method to your application without cookies, which in turns [recreates a new session](https://github.com/laravel/framework/issues/31442).
 
-return view('larabank::oneclick.redirect', ['response' => $response]);
-```
+To avoid this, Larabanker uses one controller action for each of Transbank services redirection points, which will be hit to once the payment process ends, regardless of the result.
 
-The redirection URLs, which Transbank uses to redirect the user **back** to your application once the payment process is complete, are these by default. 
+| Service       | URL          | Name                     | Your hypothetical route                        |
+|---------------|--------------|--------------------------|------------------------------------------------|
+| Webpay        | Return URL   | `transbank.webpay`       | `http://yourappurl.com/transbank/webpay`       |
+| Webpay Mall   | Return URL   | `transbank.webpayMall`   | `http://yourappurl.com/transbank/webpayMall`   |
+| Oneclick Mall | Response URL | `transbank.oneclickMall` | `http://yourappurl.com/transbank/oneclickMall` |
 
-| Service | URL | Value |
-|---|---|---|
-| Webpay        | Return URL        | `http://yourappurl.com/transbank/webpay`
-| Webpay Mall   | Return URL        | `http://yourappurl.com/transbank/webpayMall`
-| Oneclick Mall | Response URL      | `http://yourappurl.com/transbank/oneclickMall`
-
-You're free to [change these URLs with the config file](#redirection). Be sure to add your controllers for these routes to process the incoming response.
+You're free to [change these Route names in the config file](#redirection). Be sure to add your controllers for these routes to process the incoming response from Transbank.
 
 ```php
-<?php
-
-use \Illuminate\Support\Facades\Route;
 use \App\Http\Controllers\WebpayController;
+use \DarkGhostHunter\Larabanker\Facades\Webpay;
+use \Illuminate\Support\Facades\Route;
+use \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
-Route::post('/transbank/webpay', [WebpayController::class, 'receivePayment']);
+Route::post('/transbank/webpay', function (Request $request) {
+    $transaction = Webpay::commit($request->input('token_ws'));
+
+    return view('payment.processed')->with('transaction', $transaction);
+})
+    ->name('transbank.webpay')
+    ->withoutMiddleware(VerifyCsrfToken::class);
 ```
 
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use DarkGhostHunter\Larabanker\Facades\Webpay;
-
-class WebpayController extends Controller
-{
-    /**
-     * Process the payment. 
-     * 
-     * @param  \App\Http\Controllers\Request $request
-     * @return \Illuminate\Contracts\View\View
-     */
-    public function receivePayment(Request $request)
-    {
-        $transaction = Webpay::commit($request->input('token_ws'));
-        
-        return view('payment.processed')->with('transaction', $transaction);
-    }
-}
-```
-
-In any case, be sure to add your logic in these routes to receive Transbank http POST Requests, and **remove the `csrf` middleware** since Transbank will need to hit these routes to complete the transaction.
+In any case, **remove the `csrf` middleware** since Transbank will need to hit these routes to complete the transaction. You can do it using `withoutMiddleware()` when declaring the route, or by setting the exclusion in [your `VerifyCsrfToken` middleware](https://laravel.com/docs/8.x/csrf#csrf-excluding-uris).
 
 ```php
 <?php 
@@ -134,11 +120,10 @@ return [
     'credentials' => [
         // ...
     ],
-    'redirects_base' => env('APP_URL'),
     'redirects' => [
-        'webpay'       => '/transbank/webpay',
-        'webpayMall'   => '/transbank/webpayMall',
-        'oneclickMall' => '/transbank/oneclickMall',
+        'webpay'       => 'transbank.webpay',
+        'webpayMall'   => 'transbank.webpayMall',
+        'oneclickMall' => 'transbank.oneclickMall',
     ],
     'protect' => env('TRANSBANK_PROTECT', false),
     'cache' => null,
@@ -195,14 +180,14 @@ WEBPAY_SECRET=dKVhq1WGt_XapIYirTXNyUKoWTDFfxaEV63-O5jcsdw
 return [
     'redirects_base' => env('APP_URL'),
     'redirects' => [
-        'webpay'       => '/transbank/webpay',
-        'webpayMall'   => '/transbank/webpayMall',
-        'oneclickMall' => '/transbank/oneclickMall',
+        'webpay'       => 'transbank.webpay',
+        'webpayMall'   => 'transbank.webpayMall',
+        'oneclickMall' => 'transbank.oneclickMall',
     ],
 ];
 ```
 
-Only using the `Webpay`, `WebpayMall` and `OneclickMall` facades, you will be able to skip issuing the `$returnUrl` or `$responseUrl` values to the transaction creation, letting Larabanker to use the defaults issued in your config file.
+Only when using the `Webpay`, `WebpayMall` and `OneclickMall` facades, you will be able to skip issuing the `$returnUrl` or `$responseUrl` values to the transaction creation, letting Larabanker to use the defaults issued in your config file.
 
 ```php
 use DarkGhostHunter\Larabanker\Facades\Webpay;
@@ -210,21 +195,9 @@ use DarkGhostHunter\Larabanker\Facades\Webpay;
 $response = Webpay::create('myOrder#16548', 1000);
 ```
 
-Additionally, it will also push the Session ID to the transaction, so you can retrieve it and continue the session in another device if you want. If the Session has not started, or is unavailable like on stateless routes, a throwaway random Session ID will be generated.
-
-> If you need control over the parameters, you can use the `Transbank` Facade directly and call the service method.
-> 
-> ```php
-> use DarkGhostHunter\Larabanker\Facades\Transbank;
-> 
-> $response = Transbank::webpay()->create('myOrder#16548', 1000, 'https://app.com/return', 'my-sessionId');
-> ```
-
 ### Endpoint Protection
 
 ```php
-<?php
-
 return [
     'protect' => env('TRANSBANK_PROTECT', false),
     'cache' => null,
@@ -234,7 +207,7 @@ return [
 
 Disabled by default, this package offers a brute-force attack protection middleware, `larabank.protect`, for return URL. These return URLs are your application endpoints that Transbank services will redirect the user to, using a `POST` request.
 
-It works transparently, so there if it's disabled, the middleware won't verify the token. 
+If it's disabled, the middleware won't verify the token. 
 
 ```php
 use \Illuminate\Support\Facades\Route;
@@ -244,7 +217,7 @@ Route::post('/transbank/webpay', [WebpayController::class, 'receivePayment'])
      ->middleware('larabank.protect');
 ```
 
-It uses the cache to save the transaction token for 5 minutes, so if the token is not valid, the whole response is aborted. You can change the cache store and prefix with `cache` and `cache_prefix`, respectively.
+It uses the cache to save the transaction token for 5 minutes, so if the token is no longer valid, the whole response is aborted. You can change the cache store and prefix with `cache` and `cache_prefix`, respectively.
 
 > This works for receiving the redirection from Transbank on Webpay, Webpay Mall and Oneclick Mall services.
 

@@ -3,45 +3,30 @@
 namespace DarkGhostHunter\Larabanker\Listeners;
 
 use DarkGhostHunter\Transbank\Events\TransactionCreated;
-use Illuminate\Contracts\Cache\Factory;
-use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Str;
 
 class SaveTransactionToken
 {
     /**
-     * Cache repository.
-     *
-     * @var \Illuminate\Contracts\Cache\Repository
-     */
-    protected $cache;
-
-    /**
-     * Prefix for the cache key.
-     *
-     * @var string
-     */
-    protected $prefix;
-
-    /**
      * CacheTransactionToken constructor.
      *
-     * @param  \Illuminate\Contracts\Cache\Factory  $cache
-     * @param  \Illuminate\Contracts\Config\Repository  $config
+     * @param  \Illuminate\Contracts\Cache\Repository  $store
+     * @param  string  $prefix
      */
-    public function __construct(Factory $cache, Repository $config)
+    public function __construct(protected Repository $store, protected string $prefix)
     {
-        $this->cache = $cache->store($config->get('larabanker.cache'));
-        $this->prefix = Str::finish($config->get('larabanker.cache_prefix'), '|');
+        //
     }
 
     /**
      * Handle the Transaction Created event.
      *
      * @param  \DarkGhostHunter\Transbank\Events\TransactionCreated  $event
+     * @return void
      */
-    public function handle(TransactionCreated $event)
+    public function handle(TransactionCreated $event): void
     {
-        $this->cache->put($this->prefix . $event->response->getToken(), true, 300);
+        $this->store->put(Str::finish($this->prefix, '|') . $event->response->getToken(), true, 300);
     }
 }

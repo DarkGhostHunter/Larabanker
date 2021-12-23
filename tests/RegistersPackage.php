@@ -6,7 +6,7 @@ use DarkGhostHunter\Larabanker\Facades\OneclickMall;
 use DarkGhostHunter\Larabanker\Facades\Transbank;
 use DarkGhostHunter\Larabanker\Facades\Webpay;
 use DarkGhostHunter\Larabanker\Facades\WebpayMall;
-use DarkGhostHunter\Larabanker\ServiceProvider;
+use DarkGhostHunter\Larabanker\LarabankerServiceProvider;
 
 trait RegistersPackage
 {
@@ -19,7 +19,7 @@ trait RegistersPackage
      */
     protected function getPackageProviders($app)
     {
-        return [ServiceProvider::class];
+        return [LarabankerServiceProvider::class];
     }
 
     /**

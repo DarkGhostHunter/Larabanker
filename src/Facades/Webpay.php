@@ -3,10 +3,13 @@
 namespace DarkGhostHunter\Larabanker\Facades;
 
 use DarkGhostHunter\Transbank\Services\Transactions\Response;
-use DarkGhostHunter\Transbank\Services\Webpay as WebpayAccessor;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 
 /**
+ * @method static \DarkGhostHunter\Transbank\Services\Transactions\Response create(string $buyOrder, int|float $amount, string $returnUrl, ?string $sessionId, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction commit(string $token, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction status(string $token, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction refund(string $token, $amount, array $options = [])
@@ -16,34 +19,27 @@ use Illuminate\Support\Facades\Facade;
 class Webpay extends Facade
 {
     use RedirectsDefault;
-    use RetrievesSessionId;
-
-    /**
-     * Creates a ApiRequest on Transbank, returns a response from it.
-     *
-     * @param  string  $buyOrder
-     * @param  int|float  $amount
-     * @param  array  $options
-     *
-     * @return \DarkGhostHunter\Transbank\Services\Transactions\Response
-     * @throws \DarkGhostHunter\Transbank\Exceptions\TransbankException
-     */
-    public static function create(string $buyOrder, $amount, array $options = []): Response
-    {
-        return static::getFacadeRoot()->create(
-            $buyOrder,
-            $amount,
-            static::redirectFor('webpay'),
-            static::generateSessionId(),
-            $options,
-        );
-    }
 
     /**
      * {@inheritDoc}
      */
     protected static function getFacadeAccessor(): string
     {
-        return WebpayAccessor::class;
+        return \DarkGhostHunter\Transbank\Services\Webpay::class;
+    }
+
+    /**
+     * Creates a redirection to Transbank.
+     *
+     * @param  string  $buyOrder
+     * @param  int|float  $amount
+     * @param  array  $options
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public static function redirect(string $buyOrder, int|float $amount, array $options = []): RedirectResponse
+    {
+        return Redirect::away(
+            static::create($buyOrder, $amount, static::redirectFor('webpay'), Str::random(10), $options), 303
+        );
     }
 }

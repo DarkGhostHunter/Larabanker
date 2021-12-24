@@ -17,47 +17,11 @@ class ServiceProviderTest extends TestCase
     public function test_publishes_config(): void
     {
         $this->artisan('vendor:publish', [
-            '--provider' => 'DarkGhostHunter\Larabanker\ServiceProvider',
+            '--provider' => 'DarkGhostHunter\Larabanker\LarabankerServiceProvider',
             '--tag' => 'config'
         ])->execute();
 
         static::assertFileEquals(__DIR__ . '/../config/larabanker.php', config_path('larabanker.php'));
-    }
-
-    public function test_publishes_views(): void
-    {
-        $this->artisan('vendor:publish', [
-            '--provider' => 'DarkGhostHunter\Larabanker\ServiceProvider',
-            '--tag' => 'views'
-        ])->execute();
-
-        static::assertFileEquals(
-            __DIR__ . '/../resources/views/webpay/redirect.blade.php',
-            resource_path('views/vendor/larabanker/webpay/redirect.blade.php')
-        );
-
-        static::assertFileEquals(
-            __DIR__ . '/../resources/views/oneclick/redirect.blade.php',
-            resource_path('views/vendor/larabanker/oneclick/redirect.blade.php')
-        );
-    }
-
-    public function test_publishes_translations(): void
-    {
-        $this->artisan('vendor:publish', [
-            '--provider' => 'DarkGhostHunter\Larabanker\ServiceProvider',
-            '--tag' => 'lang'
-        ])->execute();
-
-        static::assertFileEquals(
-            __DIR__ . '/../resources/lang/en/redirect.php',
-            resource_path('lang/vendor/larabanker/en/redirect.php')
-        );
-
-        static::assertFileEquals(
-            __DIR__ . '/../resources/lang/es/redirect.php',
-            resource_path('lang/vendor/larabanker/es/redirect.php')
-        );
     }
 
     public function test_registers_middleware(): void
@@ -78,7 +42,7 @@ class ServiceProviderTest extends TestCase
         static::assertTrue($this->app->has(EndpointProtect::class));
     }
 
-    public function test_registers_listener_if_protected()
+    public function test_registers_listener_if_protected(): void
     {
         putenv('TRANSBANK_PROTECT=true');
 
@@ -87,7 +51,7 @@ class ServiceProviderTest extends TestCase
         static::assertTrue($this->app->make('events')->hasListeners(TransactionCreated::class));
     }
 
-    public function test_registers_listener_if_not_protected()
+    public function test_registers_listener_if_not_protected(): void
     {
         putenv('TRANSBANK_PROTECT=false');
 

@@ -3,10 +3,13 @@
 namespace DarkGhostHunter\Larabanker\Facades;
 
 use DarkGhostHunter\Transbank\Services\Transactions\Response;
-use DarkGhostHunter\Transbank\Services\WebpayMall as WebpayMallAccessor;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 
 /**
+ * @method static \DarkGhostHunter\Transbank\Services\Transactions\Response create(string $buyOrder, string $returnUrl, string $sessionId, array $details, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction commit(string $token, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction status(string $token, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction refund($commerceCode, string $token, string $buyOrder, $amount, array $options = [])
@@ -16,7 +19,14 @@ use Illuminate\Support\Facades\Facade;
 class WebpayMall extends Facade
 {
     use RedirectsDefault;
-    use RetrievesSessionId;
+
+    /**
+     * {@inheritDoc}
+     */
+    protected static function getFacadeAccessor(): string
+    {
+        return \DarkGhostHunter\Transbank\Services\WebpayMall::class;
+    }
 
     /**
      * Creates a Webpay Mall transaction.
@@ -24,26 +34,12 @@ class WebpayMall extends Facade
      * @param  string  $buyOrder
      * @param  array  $details
      * @param  array  $options
-     *
-     * @return \DarkGhostHunter\Transbank\Services\Transactions\Response
-     * @throws \DarkGhostHunter\Transbank\Exceptions\TransbankException
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public static function create(string $buyOrder, array $details, array $options = []): Response
+    public static function redirect(string $buyOrder, array $details, array $options = []): RedirectResponse
     {
-        return static::getFacadeRoot()->create(
-            $buyOrder,
-            static::redirectFor('webpayMall'),
-            static::generateSessionId(),
-            $details,
-            $options,
+        return Redirect::away(
+            static::create($buyOrder, static::redirectFor('webpayMall'), Str::random(10), $details, $options)
         );
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected static function getFacadeAccessor(): string
-    {
-        return WebpayMallAccessor::class;
     }
 }

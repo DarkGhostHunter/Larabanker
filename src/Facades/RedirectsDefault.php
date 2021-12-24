@@ -2,7 +2,7 @@
 
 namespace DarkGhostHunter\Larabanker\Facades;
 
-use Illuminate\Support\Str;
+use function route;
 
 trait RedirectsDefault
 {
@@ -15,9 +15,8 @@ trait RedirectsDefault
      */
     protected static function redirectFor(string $service): string
     {
-        $config = static::getFacadeApplication()->make('config');
-
-        return Str::finish($config->get('larabanker.redirects_base'), '/') .
-               ltrim($config->get("larabanker.redirects.$service"), '/') . '/';
+        return route(
+            static::getFacadeApplication()->make('config')->get("larabanker.redirects.$service")
+        );
     }
 }

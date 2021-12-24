@@ -11,36 +11,15 @@ use Illuminate\Support\Str;
 class EndpointProtect
 {
     /**
-     * Cache repository.
-     *
-     * @var string
-     */
-    protected $store;
-
-    /**
-     * Prefix for the cache key.
-     *
-     * @var string
-     */
-    protected $prefix;
-
-    /**
-     * Check if the protection should be enabled
-     *
-     * @var bool
-     */
-    protected $enabled;
-
-    /**
      * CacheTransactionToken constructor.
      *
-     * @param  \Illuminate\Contracts\Config\Repository  $config
+     * @param  bool  $enabled
+     * @param  string  $store
+     * @param  string  $prefix
      */
-    public function __construct(Repository $config)
+    public function __construct(protected bool $enabled, protected string $store, protected string $prefix)
     {
-        $this->enabled = $config->get('larabanker.protect');
-        $this->store = $config->get('larabanker.cache');
-        $this->prefix = Str::finish($config->get('larabanker.cache_prefix', 'transbank|token'), '|');
+        //
     }
 
     /**
@@ -49,30 +28,25 @@ class EndpointProtect
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
      *
-     * @return void|mixed
-     * @throws \Exception
+     * @return void
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
-        if (! $this->enabled || $this->check($request)) {
-            return $next($request);
-        }
+        abort_if($this->enabled && !$this->check($request), 404);
 
-        abort(404);
+        return $next($request);
     }
 
     /**
      * Checks if the token was issued. If it is, it removes it from the cache.
      *
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return bool
-     * @throws \Exception
      */
     public function check(Request $request): bool
     {
         $token = $request->input('token_ws') ?? $request->input('TBK_TOKEN');
 
-        return $token && app(Factory::class)->store($this->store)->pull($this->prefix . $token);
+        return $token && app('cache')->store($this->store)->pull(Str::finish($this->prefix, '|') . $token);
     }
 }

@@ -9,6 +9,7 @@ use DarkGhostHunter\Larabanker\Facades\Webpay;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Contracts\Cache\Factory;
+use Illuminate\Contracts\Cache\Repository;
 use Orchestra\Testbench\TestCase;
 
 class ProtectsEndpointTest extends TestCase
@@ -20,17 +21,17 @@ class ProtectsEndpointTest extends TestCase
         putenv('TRANSBANK_PROTECT=true');
 
         $this->afterApplicationCreated(
-            function () {
+            function (): void {
                 $this->app->make('router')->post(
                     'webpay/return',
-                    function () {
+                    static function (): string {
                         return 'ok';
                     }
                 )->middleware('larabanker.protect');
 
                 $this->app->make('router')->post(
                     'onepay/response',
-                    function () {
+                    static function (): string {
                         return 'ok';
                     }
                 )->middleware('larabanker.protect');
@@ -40,7 +41,7 @@ class ProtectsEndpointTest extends TestCase
         parent::setUp();
     }
 
-    public function test_doesnt_protect_by_default()
+    public function test_doesnt_protect_by_default(): void
     {
         putenv('TRANSBANK_PROTECT=');
 
@@ -48,7 +49,7 @@ class ProtectsEndpointTest extends TestCase
 
         $this->app->make('router')->post(
             'webpay/return',
-            function () {
+            static function (): string {
                 return 'ok';
             }
         )->middleware('larabanker.protect');
@@ -56,35 +57,43 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['token_ws' => 'test_token'])->assertOk();
     }
 
-    public function test_uses_custom_store()
+    public function test_uses_custom_store(): void
     {
         config()->set('larabanker.cache', 'file');
 
-        $store = $this->app->make(Factory::class)->store();
+        $store = $this->mock(Repository::class);
+
+        $store->expects('put')
+            ->with('transbank|token|test_token', true, 300)
+            ->twice()
+            ->andReturn();
+
+        $store->expects('pull')
+            ->with('transbank|token|test_token')
+            ->twice()
+            ->andReturnTrue();
 
         $factory = $this->mock(Factory::class);
 
-        $factory->shouldReceive('store')
+        $factory->expects('store')
             ->with('file')
             ->times(4)
-            ->andReturn($store);
+            ->andReturns($store);
 
-        $this->swap(Factory::class, $factory);
+        $this->swap('cache', $factory);
 
         $client = $this->mock(Client::class);
 
-        $client->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+        $client->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200, ['content-type' => 'application/json'],
                     json_encode(['token' => 'test_token', 'url' => 'test_url'])
                 )
             );
 
-        $client->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+        $client->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200, ['content-type' => 'application/json'],
                     json_encode(['token' => 'test_token', 'url_webpay' => 'test_url'])
@@ -100,13 +109,12 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['TBK_TOKEN' => 'test_token'])->assertOk();
     }
 
-    public function test_allows_webpay_transaction_token()
+    public function test_allows_webpay_transaction_token(): void
     {
         $client = $this->mock(Client::class);
 
-        $client->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+        $client->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200, ['content-type' => 'application/json'],
                     json_encode(['token' => 'test_token', 'url' => 'test_url'])
@@ -118,12 +126,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['token_ws' => 'test_token'])->assertOk();
     }
 
-    public function test_disallows_webpay_transaction_token_nonexistent()
+    public function test_disallows_webpay_transaction_token_nonexistent(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -138,12 +145,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['token_ws' => 'test_token'])->assertNotFound();
     }
 
-    public function test_disallows_webpay_transaction_token_invalid()
+    public function test_disallows_webpay_transaction_token_invalid(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -156,12 +162,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['token_ws' => 'invalid'])->assertNotFound();
     }
 
-    public function test_disallows_webpay_transaction_no_token()
+    public function test_disallows_webpay_transaction_no_token(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -174,13 +179,12 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return')->assertNotFound();
     }
 
-    public function test_allows_oneclick_transaction_token()
+    public function test_allows_oneclick_transaction_token(): void
     {
         $client = $this->mock(Client::class);
 
-        $client->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+        $client->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -193,12 +197,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('webpay/return', ['TBK_TOKEN' => 'test_token'])->assertOk();
     }
 
-    public function test_disallows_oneclick_transaction_token_nonexistent()
+    public function test_disallows_oneclick_transaction_token_nonexistent(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -213,12 +216,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('oneclick/response', ['token_ws' => 'test_token'])->assertNotFound();
     }
 
-    public function test_disallows_oneclick_transaction_token_invalid()
+    public function test_disallows_oneclick_transaction_token_invalid(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],
@@ -231,12 +233,11 @@ class ProtectsEndpointTest extends TestCase
         $this->post('oneclick/response', ['token_ws' => 'invalid'])->assertNotFound();
     }
 
-    public function test_disallows_oneclick_transaction_no_token()
+    public function test_disallows_oneclick_transaction_no_token(): void
     {
         $this->mock(Client::class)
-            ->shouldReceive('sendRequest')
-            ->once()
-            ->andReturn(
+            ->expects('sendRequest')
+            ->andReturns(
                 new Response(
                     200,
                     ['content-type' => 'application/json'],

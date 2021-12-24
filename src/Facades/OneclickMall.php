@@ -2,11 +2,12 @@
 
 namespace DarkGhostHunter\Larabanker\Facades;
 
-use DarkGhostHunter\Transbank\Services\OneclickMall as OneclickMallAccessor;
-use DarkGhostHunter\Transbank\Services\Transactions\Response;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Redirect;
 
 /**
+ * @method static \DarkGhostHunter\Transbank\Services\Transactions\Response start(string $username, string $email, string $responseUrl, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction finish(string $token, array $options = [])
  * @method static void delete(string $tbkUser, string $username, array $options = [])
  * @method static \DarkGhostHunter\Transbank\Services\Transactions\Transaction authorize(string $tbkUser, string $username, string $buyOrder, array $details, array $options = [])
@@ -20,25 +21,23 @@ class OneclickMall extends Facade
     use RedirectsDefault;
 
     /**
-     * Creates a new pending subscription in Transbank.
-     *
-     * @param  string  $username
-     * @param  string  $email
-     * @param  array  $options
-     *
-     * @return \DarkGhostHunter\Transbank\Services\Transactions\Response
-     * @throws \DarkGhostHunter\Transbank\Exceptions\TransbankException
-     */
-    public static function start(string $username, string $email, array $options = []): Response
-    {
-        return static::getFacadeRoot()->start($username, $email, static::redirectFor('oneclickMall'), $options);
-    }
-
-    /**
      * {@inheritDoc}
      */
     protected static function getFacadeAccessor(): string
     {
-        return OneclickMallAccessor::class;
+        return \DarkGhostHunter\Transbank\Services\OneclickMall::class;
+    }
+
+    /**
+     * Creates a redirection to Transbank.
+     *
+     * @param  string  $username
+     * @param  string  $email
+     * @param  array  $options
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public static function redirect(string $username, string $email, array $options = []): RedirectResponse
+    {
+        return Redirect::away(static::start($username, $email, static::redirectFor('oneclickMall'), $options));
     }
 }

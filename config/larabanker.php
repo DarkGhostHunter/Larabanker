@@ -54,12 +54,10 @@ return [
     |
     */
 
-    'redirects_base' => env('APP_URL'),
-
     'redirects' => [
-        'webpay'       => '/transbank/webpay',
-        'webpayMall'   => '/transbank/webpayMall',
-        'oneclickMall' => '/transbank/oneclickMall',
+        'webpay'       => 'transbank.webpay',
+        'webpayMall'   => 'transbank.webpayMall',
+        'oneclickMall' => 'transbank.oneclickMall',
     ],
 
 

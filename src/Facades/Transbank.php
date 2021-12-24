@@ -2,7 +2,6 @@
 
 namespace DarkGhostHunter\Larabanker\Facades;
 
-use DarkGhostHunter\Transbank\Transbank as TransbankAccessor;
 use Illuminate\Support\Facades\Facade;
 
 /**
@@ -20,6 +19,6 @@ class Transbank extends Facade
      */
     protected static function getFacadeAccessor(): string
     {
-        return TransbankAccessor::class;
+        return \DarkGhostHunter\Transbank\Transbank::class;
     }
 }

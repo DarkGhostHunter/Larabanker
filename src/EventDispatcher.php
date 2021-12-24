@@ -8,20 +8,13 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 class EventDispatcher implements EventDispatcherInterface
 {
     /**
-     * The application event dispatcher.
-     *
-     * @var \Illuminate\Contracts\Events\Dispatcher
-     */
-    protected $dispatcher;
-
-    /**
      * EventDispatcher constructor.
      *
      * @param  \Illuminate\Contracts\Events\Dispatcher  $dispatcher
      */
-    public function __construct(Dispatcher $dispatcher)
+    public function __construct(protected Dispatcher $dispatcher)
     {
-        $this->dispatcher = $dispatcher;
+        //
     }
 
     /**

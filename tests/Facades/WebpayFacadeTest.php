@@ -5,51 +5,39 @@ namespace Tests\Facades;
 use DarkGhostHunter\Larabanker\Facades\Webpay;
 use DarkGhostHunter\Transbank\Services\Webpay as TransbankWebpay;
 use Orchestra\Testbench\TestCase;
+use Tests\DefaultRoutes;
 use Tests\RegistersPackage;
+use function strlen;
 
 class WebpayFacadeTest extends TestCase
 {
     use RegistersPackage;
+    use DefaultRoutes;
 
-    public function test_uses_default_redirection_and_session_id(): void
+    protected function setUp(): void
     {
-        session()->start();
+        parent::setUp();
 
-        $id = session()->getId();
-
-        $this->mock(TransbankWebpay::class)
-            ->shouldReceive('create')
-            ->with(
-                $buyOrder = 'test_buy_order',
-                $amount = 1000,
-                'http://myapp.com/transbank/webpay/',
-                $id,
-                []
-            );
-
-        Webpay::create($buyOrder, $amount);
+        $this->defaultsRoutes();
     }
 
-    public function test_uses_default_redirection_and_random_id(): void
+    public function test_uses_default_redirection_and_random_session_id(): void
     {
-        static::assertFalse(session()->isStarted());
-
         $buyOrder = 'test_buy_order';
         $amount = 1000;
-        $returnUrl = 'http://myapp.com/transbank/webpay/';
 
         $this->mock(TransbankWebpay::class)
-            ->shouldReceive('create')
-            ->withArgs(function ($b, $a, $r, $s, $o) use ($returnUrl, $amount, $buyOrder) {
-                static::assertEquals($buyOrder, $b);
-                static::assertEquals($amount, $a);
-                static::assertEquals($returnUrl, $r);
-                static::assertEquals(20, strlen($s));
-                static::assertEmpty($o);
+            ->allows('create')
+            ->withArgs(static function ($buyOrder, $amount, $url, $id, $options): bool {
+                static::assertSame($buyOrder, 'test_buy_order');
+                static::assertSame($amount, 1000);
+                static::assertSame($url, 'http://myapp.com/transbank/webpay');
+                static::assertSame(strlen($id), 10);
+                static::assertSame($options, []);
 
                 return true;
             });
 
-        Webpay::create($buyOrder, $amount);
+        Webpay::redirect($buyOrder, $amount);
     }
 }

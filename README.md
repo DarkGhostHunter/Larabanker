@@ -55,7 +55,7 @@ Redirects are made using [default route names](#dealing-with-post-and-session-de
 
 ## Dealing with POST and Session destruction
 
-Laravel sets cookies as `SameSite: lax` by default. This means that Transbank will redirect using a full `POST` method to your application without cookies, which in turns [recreates a new session](https://github.com/laravel/framework/issues/31442).
+Laravel sets cookies as `SameSite: lax` by default. This means that Transbank will redirect using a full `POST` method to your application without cookies, which in turns [recreates a new session](https://github.com/laravel/framework/issues/31442), when the transaction fails. In other words, the session is lost on failure.
 
 To avoid this, Larabanker uses one controller action for each of Transbank services redirection points, which will be hit to once the payment process ends, regardless of the result.
 

@@ -55,9 +55,9 @@ Redirects are made using [default route names](#dealing-with-post-and-session-de
 
 ## Dealing with POST and Session destruction
 
-Laravel sets cookies as `SameSite: lax` by default. This means that Transbank will redirect using a full `POST` method to your application without cookies, which in turns [recreates a new session](https://github.com/laravel/framework/issues/31442), when the transaction fails. In other words, the session is lost on failure.
+Laravel sets cookies as `SameSite: lax` by default. This means that the session is destroyed when a payment fails or is aborted. This happens because Transbank redirects using a `POST` method to your application without cookies, forcing Laravel to [recreate a new empty session](https://github.com/laravel/framework/issues/31442).
 
-To avoid this, Larabanker uses one controller action for each of Transbank services redirection points, which will be hit to once the payment process ends, regardless of the result.
+To avoid this, you should use the same path to receive the response from Transbank, but using a different controller for `GET` or `POST`. Larabanker conveniently uses one route name for each of Transbank services redirection points, which will be hit once the payment process ends.
 
 | Service       | URL          | Name                     | Your hypothetical route                        |
 |---------------|--------------|--------------------------|------------------------------------------------|
@@ -67,41 +67,21 @@ To avoid this, Larabanker uses one controller action for each of Transbank servi
 
 You're free to [change these Route names in the config file](#redirection). Be sure to add your controllers for these routes to process the incoming response from Transbank.
 
+In this example, we will disable the `web` middleware to avoid creating a new session, and return a view with a generic failure message.
+
 ```php
-use \App\Http\Controllers\WebpayController;
 use \DarkGhostHunter\Larabanker\Facades\Webpay;
 use \Illuminate\Support\Facades\Route;
-use \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
-Route::post('/transbank/webpay', function (Request $request) {
+Route::get('transbank/webpay', function (Request $request) {
     $transaction = Webpay::commit($request->input('token_ws'));
 
     return view('payment.processed')->with('transaction', $transaction);
-})
-    ->name('transbank.webpay')
-    ->withoutMiddleware(VerifyCsrfToken::class);
-```
+})->name('transbank.webpay');
 
-In any case, **remove the `csrf` middleware** since Transbank will need to hit these routes to complete the transaction. You can do it using `withoutMiddleware()` when declaring the route, or by setting the exclusion in [your `VerifyCsrfToken` middleware](https://laravel.com/docs/8.x/csrf#csrf-excluding-uris).
-
-```php
-<?php 
-
-namespace App\Http\Middleware;
-
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as BaseVerifier;
-
-class VerifyCsrfToken extends BaseVerifier
-{
-    /**
-     * The URIs that should be excluded from CSRF verification.
-     *
-     * @var array
-     */
-    protected $except = [
-        'transbank/*', // If you're using the default routes.
-    ];
-}
+Route::post('transaction/webpay, function (Request $request) {
+    return view('payment.failed');
+})->withoutMiddleware('web');
 ```
 
 ## Configuration
@@ -205,7 +185,7 @@ return [
 ];
 ```
 
-Disabled by default, this package offers a brute-force attack protection middleware, `larabank.protect`, for return URL. These return URLs are your application endpoints that Transbank services will redirect the user to, using a `POST` request.
+Disabled by default, this package offers a brute-force attack protection middleware, `larabank.protect`, for return URL. These return URLs are your application endpoints that Transbank services will redirect the user to using a `GET` or `POST` request.
 
 If it's disabled, the middleware won't verify the token. 
 
